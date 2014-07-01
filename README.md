@@ -126,22 +126,61 @@ end
 ```
 ### アプリケーション準備
 1. Railsアプリケーションの作成
-
 ```bash
 $ rails new dev
 $ cd dev
 $ bundle
 ```
-1. 外部の利用可能なソースコード管理サービスにアプリケーションをコミットする
+以下のコメントを解除してbundle  
+_dev/Gemfile_
+```ruby
+gem 'therubyracer',  platforms: :ruby
+gem 'unicorn'
+gem 'capistrano-rails', group: :development
+```
 
+1. 外部の利用可能なソースコード管理サービスにアプリケーションをコミットする
 ```bash
 $ git add .
 $ git commit -am "アプリケーションの準備"
 $ git push origin master
+$ cd dev
 ```
 
 1. レポジトリから秘密を取り除く
+```bash
+$ cp config/database.yml{,.example}
+$ echo config/database.yml >> .gitignore
+```
 
+1. アプリケーション用Capistranoの初期化
+```bash
+$ cap install
+mkdir -p config/deploy
+create config/deploy.rb
+create config/deploy/staging.rb
+create config/deploy/production.rb
+mkdir -p lib/capistrano/tasks
+Capified
+```
+
+1. 生成されたファイルにサーバーアドレスの設定をする  
+_dev/config/deploy/staging.rb_
+```ruby
+role :app, %w{vagrant@192.168.33.10}
+role :web, %w{vagrant@192.168.33.10}
+role :db,  %w{vagrant@192.168.33.10}
+・・・
+server '192.168.33.10', user: 'vagrant', roles: %w{web app}, my_property: :my_value
+・・・
+```
+
+1. **deploy.rb**に共通情報を設定する
+_dev/config/deploy.rb_
+```ruby
+set :application, 'capistrano_introduction'
+set :repo_url, 'git@github.com:k2works/capistrano_introduction.git'
+```
 
 ### 認証と委任
 ### コールドスタート
