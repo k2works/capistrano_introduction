@@ -20,11 +20,43 @@ Capistranoバージョン3系の操作方法を修得する。
 
 # 詳細
 ## <a name="0">環境セットアップ</a>
-### 仮想マシンセットアップ
+### クックブック作成
 ```bash
-$ vagrant init ubuntu/trusty64
+$ knife cookbook create ops -o .
+WARNING: No knife configuration file found
+** Creating cookbook ops
+** Creating README for cookbook: ops
+** Creating CHANGELOG for cookbook: ops
+** Creating metadata for cookbook: ops
+** Creating specs for cookbook: ops
+$ cd ops
+$ berks init .
+      create  Berksfile
+      create  Thorfile
+      create  chefignore
+      create  .gitignore
+         run  git init from "."
+      create  Gemfile
+      create  .kitchen.yml
+      append  Thorfile
+      create  test/integration/default
+      append  .gitignore
+      append  .gitignore
+      append  Gemfile
+      append  Gemfile
+You must run `bundle install' to fetch any new gems.
+      create  Vagrantfile
+Successfully initialized
+$ bundle
 ```
 ### プロビジョニング
+#### レシピ作成
+_ops/Berksfile_  
+_ops/recipes/default.rb_  
+_ops/attributes/default.rb_  
+_ops/templates/default/nginx.conf.erb_
+
+#### Vagrantfile編集
 _Vagrantfile_
 ```ruby
 ・・・
@@ -32,10 +64,36 @@ config.vm.provision :shell, inline: "apt-get update"
 ・・・
 config.vm.network "private_network", ip: "192.168.33.10"
 ・・・
+config.vm.provision :chef_solo do |chef|
+  chef_gem_path    = "/opt/chef/embedded/lib/ruby/gems/1.9.1"
+  chef.binary_env  = "GEM_PATH=#{chef_gem_path} GEM_HOME=#{chef_gem_path}"
+  chef.binary_path = "/opt/chef/bin"
+
+   chef.json = {
+        nginx: {
+          env: ["ruby"]
+        }
+      }
+
+  chef.run_list = [
+      "recipe[rvm::vagrant]",
+      "recipe[rvm::system]",
+      "recipe[ops::default]"
+  ]
+end
+・・・
 ```
+#### プロビジョニング実行
 ```bash
-$ vagrant provision
+$ vagrant up --provision
 ```
+#### 動作確認
+_http://192.168.33.10_にアクセスできたらOK
+```bash
+$ git commit -am "環境セットアップ"
+$ cd ..
+```
+
 ## <a name="1">はじめに</a>
 ### Capistranoとは
 Capistranoはリモートサーバ自動化ツール
@@ -67,6 +125,24 @@ group :development do
 end
 ```
 ### アプリケーション準備
+1. Railsアプリケーションの作成
+
+```bash
+$ rails new dev
+$ cd dev
+$ bundle
+```
+1. 外部の利用可能なソースコード管理サービスにアプリケーションをコミットする
+
+```bash
+$ git add .
+$ git commit -am "アプリケーションの準備"
+$ git push origin master
+```
+
+1. レポジトリから秘密を取り除く
+
+
 ### 認証と委任
 ### コールドスタート
 ### フロー
