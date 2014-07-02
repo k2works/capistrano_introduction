@@ -183,6 +183,152 @@ set :repo_url, 'git@github.com:k2works/capistrano_introduction.git'
 ```
 
 ### 認証と委任
+デプロイ用ユーザーを追加する  
+_ops/recipes/default.rb_
+```ruby
+group 'deploy' do
+  group_name 'deploy'
+  gid 999
+  action :create
+end
+
+user 'deploy' do
+  comment 'deploy user'
+  group 'deploy'
+  home '/home/deploy'
+  shell '/bin/bash'
+  supports :manage_home => true
+  action :create
+end
+```
+
+#### 認証
+確認なしで認証をする必要のある場所が２箇所あります。
+
+1. ワークステーション／ノートブック／その他からサーバー。**key agent**を使って生成した**SSH keys**を使います。
+1. サーバーからレポジトリホスト。アプリケーションのコードをGitHubなどのサービスからチェックアウトできるようにします。これは通常**SSH agent forwading**,HTTP認証,またはデプロイキーを使って実行されます。
+
+#### ワークステーションのSSH keysからサーバー
+```bash
+$ cd ops
+$ ssh-keygen  -t rsa -C 'deploy@capistrano_introduction'
+Generating public/private rsa key pair.
+Enter file in which to save the key (/Users/k2works/.ssh/id_rsa): files/default/deploy.authorized_keys
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in files/default/deploy.authorized_keys.
+Your public key has been saved in files/default/deploy.authorized_keys.pub.
+The key fingerprint is:
+c4:b6:63:16:fe:39:e4:2b:19:58:ae:e3:5c:3c:77:06 deploy@capistrano_introduction
+The key's randomart image is:
++--[ RSA 2048]----+
+|                 |
+|       .         |
+|        =        |
+|       +.o       |
+|       +S E      |
+|      .+o= o     |
+|       .+o* o    |
+|     .o.oo =     |
+|     .o. ..      |
++-----------------+
+```
+_ops/recipes/default.rb_
+```ruby
+# 公開鍵の登録
+directory "/home/deploy/.ssh/" do
+  owner 'deploy'
+  group 'deploy'
+  mode 0755
+end
+
+cookbook_file "/home/#{params[:name]}/.ssh/authorized_keys" do
+  owner params[:name]
+  mode 0600
+  source "#{params[:name]}.authorized_keys.pub"
+end
+```
+接続の確認
+```bash
+$ ssh -i files/default/deploy.authorized_keys deploy@192.168.33.10
+Welcome to Ubuntu 12.04.2 LTS (GNU/Linux 3.5.0-23-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+deploy@ops-berkshelf:~$
+```
+
+#### サーバーからレポジトリホストへ
+ワークステーションからサーバーへの接続はできるようになった。次のデプロイユーザーが自動的にコードレポジトリアクセスできるようにするには以下のいずれかの方法を選択する。
+
+1. SSH Agent Forwarding
+```bash
+$ ssh-add ops/files/default/deploy.authorized_keys
+Identity added: ops/files/default/deploy.authorized_keys (ops/files/default/deploy.authorized_keys)
+$ ssh-add -l
+$ ssh deploy@192.168.33.10
+deploy@ops-berkshelf:~$ ssh git@github.com
+The authenticity of host 'github.com (192.30.252.129)' can't be established.
+RSA key fingerprint is 16:27:ac:a5:76:28:2d:36:63:1b:56:4d:eb:df:a6:48.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'github.com,192.30.252.129' (RSA) to the list of known hosts.
+PTY allocation request failed on channel 0
+Hi k2works! You've successfully authenticated, but GitHub does not provide shell access.
+Connection to github.com closed.
+deploy@ops-berkshelf:~$ exit
+$ ssh -A deploy@192.168.33.10 'git ls-remote git@github.com:k2works/capistrano_introduction.git'
+Warning: Permanently added the RSA host key for IP address '192.30.252.131' to the list of known hosts.
+3193f2b4467c063c28cd7500cffa550f3496975a        HEAD
+3193f2b4467c063c28cd7500cffa550f3496975a        refs/heads/master
+7847245623da46bd2de8cc3df758367003e13a81        refs/heads/wip
+7847245623da46bd2de8cc3df758367003e13a81        refs/pull/1/head
+```
+1. HTTP 認証
+1. GitHubのユーザー名・パスワードを使う方法
+```bash
+git ls-remote https://ユーザー名:パスワード@github.com/k2works/capistrano_introduction.git
+```
+1. OAuthパーソナルAPIトークンを使う
+```bash
+git ls-remote https://xxxx:github.com/k2works/capistrano_introduction.git
+```
+xxxxがパーソナルAPIトークン
+1. デプロイキー
+Githubに公開鍵を登録する  
+[Managing Deploy Keys](https://developer.github.com/guides/managing-deploy-keys/)
+
+#### 委任
+次のトピックとしてデプロイユーザーがサーバーのデプロイメントディレクトにアクセスできるようにする必要がある。
+
+_ops/attributes/default.rb_  
+```ruby
+・・・
+default['app']['deploy_to'] = '/usr/share/nginx/www/capistrano_introduction'
+・・・
+```
+
+_ops/recipes/default.rb_
+```ruby
+directory "#{node['app']['deploy_to']}" do
+  owner 'deploy'
+  group 'deploy'
+end
+
+bash "SetupForDeployDirectory" do
+  user 'deploy'
+  cwd "#{node['app']['deploy_to']}"
+  command "umask 0002"
+  command "chmod g+s #{node['app']['deploy_to']}"
+  command "mkdir #{node['app']['deploy_to']}/{releases,shared}"
+end
+```
 ### コールドスタート
 ### フロー
 ### ロールバック
@@ -195,3 +341,6 @@ set :repo_url, 'git@github.com:k2works/capistrano_introduction.git'
 + [Capistrano](http://capistranorb.com/documentation/overview/what-is-capistrano/)
 + [capistrano/capistrano](https://github.com/capistrano/capistrano)
 + [VAGRANT](http://www.vagrantup.com/)
++ [Chef-solo+knife-solo+Vagrantでサーバ構築を自動化してみる - その１ ユーザー追加](http://straitwalk.hatenablog.com/entry/2013/08/25/000935)
++ [Ruby - RVM の Multi-User mode について](http://babiy3104.hateblo.jp/entry/2013/08/30/103602)
++ [How To Deploy Rails Apps Using Unicorn And Nginx on CentOS 6.5](https://www.digitalocean.com/community/tutorials/how-to-deploy-rails-apps-using-unicorn-and-nginx-on-centos-6-5)
