@@ -581,11 +581,13 @@ INFO[23b2a19a] Finished in 0.004 seconds with exit status 0 (successful).
 ```bash
 $ ssh deploy@192.168.33.10
 $ cd /usr/share/nginx/www/capistrano_introduction/current
-$ /usr/local/rvm/bin/rvm ruby-2.1.0@global do bundle exec rails s
+$ /usr/local/rvm/bin/rvm ruby-2.1.0@global do bundle exec exec unicorn_rails
 ```
-_http://192.168.33.10:3000/_が確認できればOK
+_http://192.168.33.10:8080_が確認できればOK
 #### ロールバック
-
+```bash
+$ cap staging deploy:rollback
+```
 ## <a name="2">進んだ機能</a>
 ## <a name="3">フレームワーク拡張</a>
 
