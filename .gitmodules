@@ -1,3 +1,6 @@
 [submodule "dev"]
 	path = dev
 	url = git@github.com:k2works/capistrano_introduction_dev.git
+[submodule "ops"]
+	path = ops
+	url = git@github.com:k2works/capistrano_introduction_ops.git
