@@ -297,7 +297,7 @@ git ls-remote https://ユーザー名:パスワード@github.com/k2works/capistr
 ```
 1. OAuthパーソナルAPIトークンを使う
 ```bash
-git ls-remote https://xxxx:github.com/k2works/capistrano_introduction.git
+git ls-remote https://xxxx:@github.com/k2works/capistrano_introduction.git
 ```
 xxxxがパーソナルAPIトークン
 1. デプロイキー
@@ -414,6 +414,7 @@ INFOAgent forwarding is up to 192.168.33.10
 ### フロー
 #### デプロイ
 rails対応  
+_dev/Capfile_  
 _dev/config/deploy/staging.rb_  
 _dev/config/environments/staging.rb_
 ```bash
