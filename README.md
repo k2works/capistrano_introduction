@@ -361,7 +361,7 @@ task :check_write_permissions do
   end
 end
 ```
-タスク実行
+1. タスク実行
 ```bash
 $ cap staging check_write_permissions
 DEBUG[e6e9eac6] Running /usr/bin/env [ -w /usr/share/nginx/www/capistrano_introduction ] on 192.168.33.10
@@ -369,7 +369,7 @@ DEBUG[e6e9eac6] Command: [ -w /usr/share/nginx/www/capistrano_introduction ]
 DEBUG[e6e9eac6] Finished in 0.117 seconds with exit status 0 (successful).
 INFO/usr/share/nginx/www/capistrano_introduction is writable on 192.168.33.10
 ```
-Gitサーバーに接続できるか確認する
+1. Gitサーバーに接続できるか確認する
 ```bash
 $ cap staging git:check
 INFO[bc234386] Running /usr/bin/env mkdir -p /tmp/capistrano_introduction/ on 192.168.33.10
@@ -402,7 +402,7 @@ task :forwarding do
   end
 end
 ```
-実行結果
+1. 実行結果
 ```bash
 $ cap staging forwarding
 DEBUG[bbbaf0f3] Running /usr/bin/env env | grep SSH_AUTH_SOCK on 192.168.33.10
@@ -411,12 +411,22 @@ DEBUG[bbbaf0f3]         SSH_AUTH_SOCK=/tmp/ssh-UAdJzw9090/agent.9090
 DEBUG[bbbaf0f3] Finished in 0.091 seconds with exit status 0 (successful).
 INFOAgent forwarding is up to 192.168.33.10
 ```
+
 ### フロー
 #### デプロイ
-rails対応  
+##### rails対応
+_dev/Gemfile_  
 _dev/Capfile_  
 _dev/config/deploy/staging.rb_  
-_dev/config/environments/staging.rb_
+_dev/config/environments/staging.rb_  
+_dev/lib/capistrano/tasks/unicorn.rake_  
+_dev/config/unicorn/staging.rb_  
+_dev/config/secrets.yml_
+```bash
+$ rails g controller wlecome index
+```
+_dev/config/routes.rb_
+##### railsアプリケーションのデプロイ
 ```bash
  $ cap staging deploy
 DEBUG[ce330f89] Running /usr/local/rvm/bin/rvm version on 192.168.33.10
@@ -584,14 +594,70 @@ $ ssh deploy@192.168.33.10
 $ cd /usr/share/nginx/www/capistrano_introduction/current
 $ /usr/local/rvm/bin/rvm ruby-2.1.0@global do bundle exec exec unicorn_rails
 ```
-_http://192.168.33.10:8080_が確認できればOK
+_http://192.168.33.10_が確認できればOK
 #### ロールバック
 ```bash
 $ cap staging deploy:rollback
 ```
 ## <a name="2">進んだ機能</a>
+### SSH Kitを使ったリモートコマンド
+Capistranoは[SSHKit](https://github.com/capistrano/sshkit)を使ってリモートサーバーでコマンドを実行する。
+### リモートファイルタスク
+_remote_file_タスクは予め要求されるリモートファイルの存在を許可します。
+### ロールフィルタリング
+ロールフィルタを使うことで特定のロールにマッチするサーバーだけにCapistranoのタスクを制限することができます。
+#### ロールフィルタを指定する
+ロールフィルタを特定するには３つの方法がある。
+##### 環境変数
+`ROLES=app,web cap production deploy`
+##### 設定ファイル
+`set :filter, :roles => %w{app web}`
+##### コマンドライン
+`cap --roles=app,web production deploy`
+### ホストフィルタリング
+ホストフィルタを使うことで特定のホスト名にマッチするサーバーだけにCapistranoのタスクを制限することができます。
+#### ホストフィルタを指定する
+ホストフィルタを特定するには３つの方法がある。
+##### 環境変数
+`HOStS=server1,server2 cap production deploy`
+##### 設定ファイル
+`set :filter, :hosts => %w{server1 server2}`
+##### コマンドライン
+`cap --hosts=server1,server2 production deploy`
+### Rubyスクリプト内のCapistrano
+configフォルダとdeploy.rbを作る代わりに単一のrubyスクリプトにプログラマブルに設定できる。
+```ruby
+require 'capistrano/all'
+stages = "production"
+set :application, 'my_app_name'
+set :repo_url, 'git@github.com:capistrano/capistrano.git'
+set :deploy_to, '/var/www/'
+set :stage, :production
+role :app, %w{}
+require 'capistrano/setup'
+require 'capistrano/deploy'
+Dir.glob('capistrano/tasks/*.rake').each { |r| import r }
+Capistrano::Application.invoke("production")
+Capistrano::Application.invoke("deploy")
+```
 ## <a name="3">フレームワーク拡張</a>
+### Ruby on Rails  
++ [capistrano/rails](capistrano/rails)
 
+### Bundler
++ [capistrano/bundler](capistrano/bundler)
+
+### Rbenv & RVM & Chruby
++ [capistrano/rbenv](capistrano/rbenv)
++ [capistrano/rvm](capistrano/rvm)
++ [capistrano/chruby](capistrano/chruby)
+
+### Plugins
++ [bruno-/capistrano-postgresql](bruno-/capistrano-postgresql)
++ [bruno-/capistrano-unicorn-nginx](bruno-/capistrano-unicorn-nginx)
++ [bruno-/capistrano-rbenv-install](bruno-/capistrano-rbenv-install)
++ [bruno-/capistrano-safe-deploy-to](bruno-/capistrano-safe-deploy-to)
++ [scottsuch/capistrano-graphite](scottsuch/capistrano-graphite)
 
 # 参照
 + [Capistrano](http://capistranorb.com/documentation/overview/what-is-capistrano/)
