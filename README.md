@@ -69,12 +69,6 @@ config.vm.provision :chef_solo do |chef|
   chef.binary_env  = "GEM_PATH=#{chef_gem_path} GEM_HOME=#{chef_gem_path}"
   chef.binary_path = "/opt/chef/bin"
 
-   chef.json = {
-        nginx: {
-          env: ["ruby"]
-        }
-      }
-
   chef.run_list = [
       "recipe[rvm::vagrant]",
       "recipe[rvm::system]",
