@@ -642,22 +642,22 @@ Capistrano::Application.invoke("deploy")
 ```
 ## <a name="3">フレームワーク拡張</a>
 ### Ruby on Rails  
-<div class="github-widget" data-repo="capistrano/rails"></div>  
++ [capistrano/rails](capistrano/rails)
 
 ### Bundler
-<div class="github-widget" data-repo="capistrano/bundler"></div>  
++ [capistrano/bundler](capistrano/bundler)
 
 ### Rbenv & RVM & Chruby
-<div class="github-widget" data-repo="capistrano/rbenv"></div>  
-<div class="github-widget" data-repo="capistrano/rvm"></div>  
-<div class="github-widget" data-repo="capistrano/chruby"></div>  
++ [capistrano/rbenv](capistrano/rbenv)
++ [capistrano/rvm](capistrano/rvm)
++ [capistrano/chruby](capistrano/chruby)
 
 ### Plugins
-<div class="github-widget" data-repo="bruno-/capistrano-postgresql"></div>  
-<div class="github-widget" data-repo="bruno-/capistrano-unicorn-nginx"></div>  
-<div class="github-widget" data-repo="bruno-/capistrano-rbenv-install"></div>  
-<div class="github-widget" data-repo="bruno-/capistrano-safe-deploy-to"></div>  
-<div class="github-widget" data-repo="scottsuch/capistrano-graphite"></div>  
++ [bruno-/capistrano-postgresql](bruno-/capistrano-postgresql)
++ [bruno-/capistrano-unicorn-nginx](bruno-/capistrano-unicorn-nginx)
++ [bruno-/capistrano-rbenv-install](bruno-/capistrano-rbenv-install)
++ [bruno-/capistrano-safe-deploy-to](bruno-/capistrano-safe-deploy-to)
++ [scottsuch/capistrano-graphite](scottsuch/capistrano-graphite)
 
 # 参照
 + [Capistrano](http://capistranorb.com/documentation/overview/what-is-capistrano/)
